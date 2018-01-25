@@ -23,8 +23,8 @@
   :cljsbuild
   {:builds
    [{:id "dev"
-     :source-paths ["src" "dev/src"]
-     :compiler {:main rejax.dev
+     :source-paths ["src" "dev/src/cljs" "dev/src/cljx"]
+     :compiler {:main rejax-demo.dev
                 :output-to "resources/rejax-demo/public/js/compiled/demo/demo.js"
                 :output-dir "resources/rejax-demo/public/js/compiled/demo/out"
                 :asset-path "js/compiled/demo/out"
@@ -53,10 +53,10 @@
 
 
     {:id "test"
-     :source-paths ["src" "test"]
+     :source-paths ["src" "test" "dev/src/cljs"]
      :compiler {:main rejax.runner
-                :output-to "resources/rejax/public/js/compiled/test.js"
-                :output-dir "resources/rejax/public/js/compiled/test/out"
+                :output-to "resources/rejax-demo/public/js/compiled/test.js"
+                :output-dir "resources/rejax-demo/public/js/compiled/test/out"
                 :optimizations :none}}]}
                 ;workaround for running lein doo with latest CLJS, see https://github.com/bensu/doo/pull/141
                 ;:process-shim false}}]}

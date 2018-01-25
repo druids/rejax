@@ -9,7 +9,7 @@ logs/
 out/
 pom.xml.asc
 pom.xml
-resources/rui-demo/public/js/
+resources/rejax-demo/public/js/
 
 # IDE
 *.swp
