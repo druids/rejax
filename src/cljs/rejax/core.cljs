@@ -1,9 +1,66 @@
 (ns rejax.core
   "Maintains requests activity in the DB (keeps information about running HTTP requests)."
   (:require
-    [clojure.string :refer [blank?]]
-    [ajax.core :as ajax]
-    [re-frame.core :refer [dispatch enrich]]))
+   [clojure.string :refer [blank?]]
+   [ajax.core :as ajax]
+   [ajax.transit :as transit]
+   [cognitect.transit :as ct]
+   [re-frame.core :as re-frame]))
+
+
+(defrecord ^{:doc "A Ring-like response object"}
+  Response [status body headers])
+
+
+(defmulti ->status type)
+
+(defmethod ->status cljs.core.IVector
+  [response-vec]
+  (let [[_ _ status] response-vec]
+    status))
+
+(defmethod ->status Response
+  [response-obj]
+  (:status response-obj))
+
+(defmethod ->status :default
+  [_]
+  nil)
+
+
+(defn xhr->ring-req
+  "Converts a XHR response into Ring-like request object"
+  [reader xhr]
+  (->Response
+   (.getStatus xhr)
+   (when-not (-> xhr .getResponseText blank?)
+     (ct/read reader (.getResponseText xhr)))
+   (-> xhr
+       .getResponseHeaders
+       (js->clj :keywordize-keys true))))
+
+
+(defn better-transit-response-format
+  "Works same as `ajax.core/transit-response-format` except it converts a response into Ring-like request object"
+  ([]
+   (better-transit-response-format {}))
+  ([opts]
+   (let [conf (transit/transit-response-format opts)
+         reader (or (:reader opts)
+                    (ct/reader :json opts))]
+     (assoc conf :read (partial xhr->ring-req reader)))))
+
+
+(defn request
+  "Works like `ajax.core/ajax-request`, but it passes `rejax.core.Response` for both success and failure"
+  [opts]
+  (-> opts
+      (update :handler (fn [handler]
+                         (fn [[_ response]]
+                           (handler (if (contains? response :failure) ;; failure reponse is wrapped in `:failure` key
+                                      (:response response)
+                                      response)))))
+      ajax/ajax-request))
 
 
 (defn db->waiting?
@@ -25,23 +82,25 @@
 
 (def ^{:doc "Use this middleware when you start a request with a given `id`."}
   start-waiting
-  (enrich
+  (re-frame/enrich
     (fn [db [_ {:keys [id]}]]
       (toggle-waiting db id true))))
 
 
 (def ^{:doc "Use this middleware when you finish a request with a given `id`."}
   finish-waiting
-  (enrich
+  (re-frame/enrich
     (fn [db [_ {:keys [id]}]]
       (toggle-waiting db id false))))
 
 
 (def ^{:doc "Toggles offline state be a response's status"}
   toggle-offline-status
-  (enrich
-    (fn [db [_ _ [response headers status]]]
-      (assoc-in db [:rejax :offline?] (zero? status)))))
+  (re-frame/enrich
+    (fn [db [_ _ response-vec-or-obj]]
+      (if-let [status (->status response-vec-or-obj)]
+        (assoc-in db [:rejax :offline?] (zero? status))
+        db))))
 
 
 (def initial-http-params
@@ -87,7 +146,7 @@
 (defn- call-http-method
   [method url & {:keys [handler error-handler headers format response-format keywords? params]
                  :as kwargs
-                 :or {error-handler #(dispatch [:rejax/handle-error-response {} %])}}]
+                 :or {error-handler #(re-frame/dispatch [:rejax/handle-error-response {} %])}}]
   (apply method (->> kwargs
                      (merge initial-http-params)
                      (wrap-handlers handler error-handler)
