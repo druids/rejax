@@ -4,9 +4,7 @@
   :license {:name "MIT License"
             :url "http://opensource.org/licenses/MIT"}
 
-  :dependencies [[org.clojure/clojurescript "1.10.339"]
-                 [cljs-ajax "0.7.4"]
-                 [re-frame "0.10.6"]]
+  :dependencies [[cljs-ajax "0.7.4"]]
 
   :source-paths ["src/cljs"]
 
@@ -16,7 +14,9 @@
                              [lein-figwheel "0.5.14"]
                              [lein-doo "0.1.8"]]
                    :dependencies [[org.clojure/clojure "1.9.0"]
-                                  [reagent "0.8.1"]
+                                  [org.clojure/clojurescript "1.9.946"]
+                                  [reagent "0.7.0"]
+                                  [re-frame "0.10.2"]
                                   [re-frisk "0.5.4"]
                                   [binaryage/devtools "0.9.10"]]}}
 
