@@ -1,4 +1,4 @@
-(defproject rejax "0.1.0"
+(defproject rejax "0.2.0"
   :description "A library that creates nicer API for usage of cljs-ajax in Re-frame"
   :url "https://github.com/druids/rejax"
   :license {:name "MIT License"
