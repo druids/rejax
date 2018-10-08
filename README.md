@@ -11,5 +11,5 @@ Leiningen/Boot
 --------------
 
 ```clojure
-[rejax "0.1.0"]
+[rejax "0.2.0"]
 ```
